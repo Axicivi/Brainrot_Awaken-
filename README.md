@@ -16,4 +16,6 @@ Game:
 https://www.roblox.com/games/81822215512699/1-Brainrots-Awaken
 
 Code sample:
-PetService.lua
+PetService.luau
+PetEquipService.luau
+PetManager.luau
