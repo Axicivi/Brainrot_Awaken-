@@ -7,7 +7,6 @@ This repository contains one of the gameplay systems I created for Brainrot Awak
 Features:
 - Equip / Unequip pets
 - Multiple pets equipped
-- Pet follow system
 - Pet multipliers
 - Pet data saving
 - Network replication
