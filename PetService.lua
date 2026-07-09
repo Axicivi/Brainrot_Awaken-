@@ -4,21 +4,15 @@ PetService.__index = PetService
 
 local ProfileHandlerService = require(game:GetService("ServerScriptService").Services.DataStoreService.ProfileHandlerService)
 
--- ==========================================
 -- CONFIG
--- ==========================================
 local PetsConfig = require(game.ReplicatedStorage.Configs.PetsConfig)
 local AurasConfig = require(game.ReplicatedStorage.Configs.AurasConfig)
 
--- ==========================================
 -- EVENTS
--- ==========================================
 local petInventoryUpdate = game.ReplicatedStorage.Events.Remotes.PetInventoryUpdate :: RemoteEvent
 local petEquipUpdate     = game.ReplicatedStorage.Events.Remotes.PetEquipUpdate     :: RemoteEvent
 
--- ==========================================
 -- VARIABLES
--- ==========================================
 export type PendingSkip = { key: string, level: number }
 
 export type PetManagerObject = typeof(setmetatable(
@@ -35,24 +29,18 @@ export type PetManagerObject = typeof(setmetatable(
 local FREE_SLOTS = 3  -- slots 1-3 are free
 local ActiveManagers: { [Player]: PetManagerObject } = {}
 
--- ==========================================
 -- HELPERS
--- ==========================================
 
 local function syncProfile(self: PetManagerObject)
 	local profile = ProfileHandlerService:GetProfile(self.Player)
 	if not profile then return end
 	profile.Pets.counts     = self.Counts
-	profile.Pets.milestone  = self.Milestone   -- lowercase, matches template
+	profile.Pets.milestone  = self.Milestone   
 	profile.Pets.equipped   = self.Equipped
-	-- NOTE: if your profile template pre-declares `Pets` fields, add
-	-- `pendingSkip = nil` there too so this key exists from the start.
 	profile.Pets.pendingSkip = self.PendingSkip
 end
 
--- ==========================================
 -- API
--- ==========================================
 function PetService.new(player: Player): PetManagerObject?
 	local data = ProfileHandlerService:GetProfile(player)
 	if not data then return nil end
@@ -73,7 +61,7 @@ function PetService.new(player: Player): PetManagerObject?
 	ActiveManagers[player] = self :: any
 	return self :: any
 end
--- ─── Counts ───────────────────────────────────────────────────────────────
+-- ─── Counts 
 function PetService:AddPet(petName: string)
 	local maxRequirement = PetsConfig.GetMaxRequirement(petName)
 	local currentCount   = self.Counts[petName] or 0
@@ -105,9 +93,6 @@ function PetService:GetPetCount(petName: string): number
 end
 
 -- ─── Skip purchases ─────────────────────────────────────────────────────────
--- Tops the player's copy count for `petKey` up to whatever the cumulative
--- requirement for `level` is (so buying Skip3 also covers levels 1 and 2,
--- since requirements stack). Never lowers an existing count.
 function PetService:GrantPetUpToLevel(petKey: string, level: number): boolean
 	local category = PetsConfig.GetCategoryForKey(petKey)
 	local petData = category and category[petKey]
@@ -127,9 +112,6 @@ function PetService:GrantPetUpToLevel(petKey: string, level: number): boolean
 	return true
 end
 
--- Records which pet/level the player intends to buy a skip for, BEFORE the
--- purchase prompt opens, persisted into their profile so it survives a
--- disconnect that happens while the prompt is still open.
 function PetService:SetPendingSkip(petKey: string, level: number)
 	self.PendingSkip = { key = petKey, level = level }
 	syncProfile(self)
@@ -230,14 +212,11 @@ function PetService:GetManager(player: Player): PetManagerObject
 	return ActiveManagers[player] :: any
 end
 
--- ==========================================
 -- INIT
--- ==========================================
 function PetService:InitPlayer(player: Player)
 	local manager = PetService.new(player)
 	if not manager then return end
 	
-	-- Send initial state to client
 	petInventoryUpdate:FireClient(player, manager.Counts, manager.Equipped)
 	petEquipUpdate:FireClient(player, manager.Equipped)
 	print("PetService: created manager for", player.Name)
