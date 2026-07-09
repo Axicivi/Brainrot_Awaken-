@@ -7,12 +7,8 @@
 --   CLIENT  (Pet.bind)  attaches to the replicated, tagged model and drives
 --                       it: movement (the AlignPosition target), animations,
 --                       summon / recall.
---
--- The server builds the AlignPosition / AlignOrientation whose target
--- (Attachment1) lives on workspace.Terrain. Every BasePart is handed to the
--- owning client, which then moves that Terrain attachment each Heartbeat; the
--- constraints pull the pet along. Other clients only see the replicated part
--- positions, so they run animations but not movement.
+-- Pet.Bind on client would help to reduce the bandwith of script by the way
+
 
 local Pet = {}
 Pet.__index = Pet
@@ -47,16 +43,12 @@ end
 local activePets: { [Player]: { [number]: any } } = {}
 local clientPets: { [Model]: any } = {}
 
---==============================================================================
 -- SERVER
---==============================================================================
 
--- Lazily-built petKey -> first AurasConfig level index. A brainrot uses the VFX
--- of the first aura level it appears at, across all 3 of its stages.
 local _firstAuraLevel: { [string]: number }? = nil
 
 
-
+ -- get aura level
 local function getFirstAuraLevel(petKey: string): number?
 	if not _firstAuraLevel then
 		_firstAuraLevel = {}
@@ -71,9 +63,7 @@ local function getFirstAuraLevel(petKey: string): number?
 end
 
 
-
-
-
+--get id of vfx
 function Pet:_getVFXId(): string?
 	local petData = PetsConfig.GetPetData(self.PetKey)
 	if petData and petData.VFXId then
@@ -652,7 +642,7 @@ end
 function Pet.unbind(model: Model)
 	local pet = clientPets[model]
 	if pet then
-		pet:Destroy() -- also clears clientPets[model]
+		pet:Destroy() --clear the pet
 	end
 end
 
